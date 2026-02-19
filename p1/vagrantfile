@@ -1,34 +1,61 @@
-Vagrant.configure("2") do |config|
-	config.vm.box = "generic/alpine318"
-	config.vm.box_version = "4.3.12"
+require 'dotenv'
+Dotenv.load
 
+# In WSL windows
+ssh_pub_key_path = File.expand_path(ENV['PATH_ID_RSA_PUB'])
+
+if File.exist?(ssh_pub_key_path)
+	ssh_pub_key_path = File.read(ssh_pub_key_path).strip
+else
+	puts "Warning : SSH key not found at #{ssh_pub_key_path}"
+	ssh_pub_key_path = ""
+end
+
+Vagrant.configure("2") do |config|
+	config.vm.box = ENV['VM_BOX']
+	config.vm.box_version = ENV['VM_VERSION_BOX']
+
+	config.vm.provision "shell", inline: <<-SHELL
+		mkdir -p /home/vagrant/.ssh
+		echo "#{ssh_pub_key_path}" >> /home/vagrant/.ssh/authorized_keys
+		chown -R vagrant:vagrant /home/vagrant/.ssh
+		chmod 700 /home/vagrant/.ssh
+		chmod 600 /home/vagrant/.ssh/authorized_keys
+	SHELL
+		
 	config.vm.provider "virtualbox" do |vb|
-		vb.memory = "1024"
-		vb.cpus = 1
-		extern_path = "/media/rihoy/SenkaSamT7/virtualMachina/IoT"
+		vb.memory = ENV['VM_MEMORY']
+		vb.cpus = ENV['VM_CORE']
 	end
 	config.vm.define "rihoyS" do |server|
 		server.vm.hostname = "rihoyS"
-		server.vm.network = "private_network", ip: "192.168.56.110"
-		
+		server.vm.network "private_network", ip: ENV['IP_NODE_S']
+		server.vm.synced_folder ".", "/vagrant", type: "rsync"
+
 		server.vm.provider "virtualbox" do |vb|
 			vb.name = "rihoyS"
+			extern_path = ENV['PATH_VM_LOAD']
 			vb.customize ["setproperty", "machinefolder", extern_path]
 		end
 
 		# provision extern scripts
-		server.vm.provision "shell", path: "scripts/install_p1_server.sh"
+		server.vm.provision "shell",
+			path: "scripts/install_p1_server.sh",
+			args: [ENV['K3S_TOKEN'], ENV['IP_NODE_S']]
 	end
 
 	config.vm.define "rihoySW" do |worker|
 		worker.vm.hostname = "rihoySW"
-		worker.vm.network "private_network", ip: "192.168.56.111"
+		worker.vm.network "private_network", ip: ENV['IP_NODE_SW']
 		
 		worker.vm.provider "virtualbox" do |vb|
 			vb.name = "rihoySW"
+			extern_path = ENV['PATH_VM_LOAD']
 			vb.customize ["setproperty", "machinefolder", extern_path]
 		end
 
-		worker.vm.provision "shell", path: "scripts/install_p1_worker.sh"
+		worker.vm.provision "shell",
+			path: "scripts/install_p1_worker.sh",
+			args: [ENV['K3S_TOKEN'], ENV['IP_NODE_S']]
 	end
 end

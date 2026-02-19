@@ -17,9 +17,9 @@ Vagrant.configure("2") do |config|
 
   config.vm.provider "virtualbox" do |vb|
 
-	extern_path = "/media/rihoy/SenkaSamT7/VirtualMachina/IoT"
+	# extern_path = "/media/rihoy/SenkaSamT7/VirtualMachina/IoT"
 
-	vb.customize ["setproperty", "machinefolder", extern_path]
+	# vb.customize ["setproperty", "machinefolder", extern_path]
 
 	vb.name = "InceptionOfThings42"
   end
