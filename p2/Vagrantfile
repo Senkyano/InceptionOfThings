@@ -1,0 +1,49 @@
+require 'dotenv'
+Dotenv.load
+
+ssh_pub_key_path = File.expand_path(ENV['PATH_ID_RSA_PUB'])
+
+if File.exist?(ssh_pub_key_path)
+	ssh_pub_key_path = File.read(ssh_pub_key_path).strip
+else
+	puts "Warning : SSH key not found at #{ssh_pub_key_path}"
+	ssh_pub_key_path = ""
+end
+
+Vagrant.configure("2") do |config|
+
+	config.vm.box = ENV['VM_BOX']
+	config.vm.box_version = ENV['VM_VERSION']
+
+	config.vm.provision "shell", inline: <<-SHELL
+		mkdir -p /home/vagrant/.ssh
+		echo "#{ssh_pub_key_path}" >> /home/vagrant/.ssh/authorized_keys
+		chown -R vagrant:vagrant /home/vagrant/.ssh
+		chmod 700 /home/vagrant/.ssh
+		chmod 600 /home/vagrant/.ssh/authorized_keys
+	SHELL
+
+	config.provider "virtualbox" do |vb|
+		vb.memory = ENV['VM_MEMORY']
+		vb.cpus = ENV['VM_CORE']
+	end
+
+	config.vm.define ENV['VM_TAG'] do |server|
+		server.vm.hostname = ENV['VM_NAME']
+		server.vm.synced_folder ".", "/vagrant", type: "rsync"
+		server.vm.network "private_network", ip: ENV['IP_NODE_S']
+
+		server.vm.provider "virtualbox" do |vb|
+			vb.name = ENV['VM_NAME']
+			extern_path = ENV['PATH_VM_LOAD']
+			vb.customize ["setproperty", "machinefolder", extern_path]
+		end
+
+		server.vm.provision "shell",
+			path: "../p1/scripts/install_p1_server.sh"
+			args: [ENV['K3S_TOKEN'], ENV['IP_NODE_S']]
+
+		server.vm.provision "shell",
+			path: "scripts/install_p2_3webapp.sh"
+	end
+end
