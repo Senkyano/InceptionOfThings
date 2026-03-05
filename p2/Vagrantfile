@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
 		chmod 600 /home/vagrant/.ssh/authorized_keys
 	SHELL
 
-	config.provider "virtualbox" do |vb|
+	config.vm.provider "virtualbox" do |vb|
 		vb.memory = ENV['VM_MEMORY']
 		vb.cpus = ENV['VM_CORE']
 	end
@@ -40,7 +40,7 @@ Vagrant.configure("2") do |config|
 		end
 
 		server.vm.provision "shell",
-			path: "../p1/scripts/install_p1_server.sh"
+			path: "../p1/scripts/install_p1_server.sh",
 			args: [ENV['K3S_TOKEN'], ENV['IP_NODE_S']]
 
 		server.vm.provision "shell",
