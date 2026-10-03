@@ -1,0 +1,34 @@
+TOKEN = File.read(File.expand_path("confs/token", __dir__)).strip
+
+Vagrant.configure("2") do |config|
+
+    config.vm.box = "generic/alpine319"
+    config.vm.box_check_update = false
+
+    # Server machine
+    config.vm.define "ahenaultS" do |server|
+        server.vm.hostname = "ahenaultS"
+        server.vm.network "private_network", ip: "192.168.56.110"
+
+        server.vm.provider "libvirt" do |libvirt|
+            libvirt.cpus = 2
+            libvirt.memory = 2048
+        end
+        
+        server.vm.provision "shell", path: "scripts/server.sh", args: [TOKEN]
+	end
+
+    # ServerWorker machine
+	config.vm.define "ahenaultSW" do |worker|
+        worker.vm.hostname = "ahenaultSW"
+        worker.vm.network "private_network", ip: "192.168.56.111"
+
+  		worker.vm.provider "libvirt" do |libvirt|
+			libvirt.cpus = 1
+			libvirt.memory = 512
+		end
+        
+		worker.vm.provision "shell", path: "scripts/worker.sh", args: [TOKEN]
+	end
+
+end
