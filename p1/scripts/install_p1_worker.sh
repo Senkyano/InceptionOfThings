@@ -33,10 +33,9 @@ done
 echo "=== Installation de K3s en mode agent ==="
 curl -sfL https://get.k3s.io | \
 	K3S_URL="https://${SERVER_IP}:6443" \
-	K3S_TOKEN="K10bb2b3b950ea19944e9eca2612df820e605f491865f56b2c5f06579da4e11b61f::server:d25bff03bfddc749c669605315cb742d" \
+	K3S_TOKEN="${K3S_TOKEN}" \
 	sh -s - agent \
-	--node-ip "${WORKER_IP}" \
-	--flannel-iface eth1
+	--node-ip "${WORKER_IP}"
 
 echo "Worker connecté au server !"
 rc-service k3s-agent status
