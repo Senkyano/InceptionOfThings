@@ -17,12 +17,14 @@ SERVER_IP=$2
 # Install K3s
 echo "=== Installation K3s on mode Server ==="
 curl -sfL https://get.k3s.io | sh -s - server \
-	--token=$TOKEN \
+	--token="K10bb2b3b950ea19944e9eca2612df820e605f491865f56b2c5f06579da4e11b61f::server:d25bff03bfddc749c669605315cb742d" \
 	--disable=traefik \
 	--write-kubeconfig-mode 644 \
 	--node-ip $SERVER_IP \
 	--bind-address $SERVER_IP \
-	--advertise-address $SERVER_IP
+	--advertise-address $SERVER_IP \
+	--flannel-iface eth1 \
+	--node-label "roles=master"
 
 while [ ! -f /var/lib/rancher/k3s/server/node-token ]; do
 	echo "Waiting k3s server start ..." && sleep 2
