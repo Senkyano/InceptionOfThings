@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app
+  namespace: argocd
+spec:
+  project: default
+  # La source : quel dépôt Git et quel chemin
+  source:
+    repoURL: https://github.com/Anaelle42/ahenault-iot-p3
+    targetRevision: main
+    path: mon-app
+
+  # La destination : quel cluster et quel namespace
+  destination:
+    server: https://kubernetes.default.svc  # cluster local
+    namespace: dev
+
+  # La politique de synchronisation
+  syncPolicy:
+    automated:           # synchronisation automatique
+      selfHeal: true     # correction du drift automatique
+      prune: true        # suppression des ressources retirées de Git
+    syncOptions:
+      - CreateNamespace=true  # Crée le namespace si absent
