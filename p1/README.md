@@ -26,3 +26,8 @@ IP_NODE_SW=192.168.56.111
 # Token server
 K3S_TOKEN=?
 ```
+
+this command is to get nodes of the cluster
+```bash
+kubectl get nodes -o wide
+```

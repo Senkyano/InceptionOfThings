@@ -2,7 +2,7 @@
 echo "=== Get k3's ready ==="
 
 until kubectl get nodes; do
-	sleep 2
+    sleep 2
 done
 
 echo "=== Install nginx ingress controller ==="
@@ -12,9 +12,14 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 echo "=== Waiting ingress Nginx start ==="
 
 kubectl wait --namespace ingress-nginx \
-	--for=condition=ready pods \
-	--selector=app.kubernetes.io/component=controller \
-	--timeout=120s
+    --for=condition=ready pods \
+    --selector=app.kubernetes.io/component=controller \
+    --timeout=120s
+
+# --- CORRECTIF POUR L'ERREUR WEBHOOK ---
+echo "=== Removing Validating Webhook ==="
+kubectl delete validatingwebhookconfiguration ingress-nginx-admission --ignore-not-found=true
+# ---------------------------------------
 
 # Patch to use port 80
 
