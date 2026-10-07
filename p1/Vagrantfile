@@ -22,17 +22,15 @@ Vagrant.configure("2") do |config|
 		chmod 700 /home/vagrant/.ssh
 		chmod 600 /home/vagrant/.ssh/authorized_keys
 	SHELL
-		
-	config.vm.provider "virtualbox" do |vb|
-		vb.memory = ENV['VM_MEMORY']
-		vb.cpus = ENV['VM_CORE']
-	end
+
 	config.vm.define "rihoyS" do |server|
 		server.vm.hostname = "rihoyS"
 		server.vm.network "private_network", ip: ENV['IP_NODE_S']
 		server.vm.synced_folder ".", "/vagrant", type: "rsync"
 
 		server.vm.provider "virtualbox" do |vb|
+			vb.memory = ENV['VM_MEMORY_SERVER']
+			vb.cpus = ENV['VM_CORE_SERVER']
 			vb.name = "rihoyS"
 			extern_path = ENV['PATH_VM_LOAD']
 			vb.customize ["setproperty", "machinefolder", extern_path]
@@ -49,6 +47,8 @@ Vagrant.configure("2") do |config|
 		worker.vm.network "private_network", ip: ENV['IP_NODE_SW']
 		
 		worker.vm.provider "virtualbox" do |vb|
+			vb.memory = ENV['VM_MEMORY']
+			vb.cpus = ENV['VM_CORE']
 			vb.name = "rihoySW"
 			extern_path = ENV['PATH_VM_LOAD']
 			vb.customize ["setproperty", "machinefolder", extern_path]

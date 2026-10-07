@@ -1,41 +1,18 @@
 #!/bin/sh
-# Usage: install_p1_worker.sh <TOKEN> <SERVER_IP> <WORKER_IP>
 
-K3S_TOKEN="$1"
-SERVER_IP="$2"
-WORKER_IP="$3"
+TOKEN=$1
+SERVER_IP=$2
 
-if [ -z "$K3S_TOKEN" ] || [ -z "$SERVER_IP" ] || [ -z "$WORKER_IP" ]; then
-	echo "Usage: $0 <TOKEN> <SERVER_IP> <WORKER_IP>"
-	exit 1
-fi
-
-echo "=== Dépendances (worker) ==="
+echo "Préparation de Alpine Linux pour K3s (Worker)..."
 apk update
-apk add --no-cache curl
+apk add curl ca-certificates iptables ip6tables coreutils util-linux
 
-# K3s a besoin des cgroups sur Alpine
-rc-update add cgroups default 2>/dev/null
-rc-service cgroups start 2>/dev/null
+echo "Installation de K3s Agent..."
+# Le fait de définir K3S_URL indique à l'installateur qu'il doit configurer un "agent" (worker)
+export INSTALL_K3S_VERSION="v1.30.4+k3s1"
+export K3S_URL="agent https://${SERVER_IP}:6443"
+export K3S_TOKEN=${TOKEN}
 
-echo "=== Attente du server K3s (${SERVER_IP}:6443) ==="
-COUNT=0
-until curl -sk "https://${SERVER_IP}:6443" >/dev/null 2>&1; do
-	COUNT=$((COUNT + 1))
-	if [ "$COUNT" -ge 60 ]; then
-		echo "Timeout: le server K3s ne répond pas"
-		exit 1
-	fi
-	echo "Attente du server... (${COUNT}/60)"
-	sleep 5
-done
+curl -sfL https://get.k3s.io | sh -
 
-echo "=== Installation de K3s en mode agent ==="
-curl -sfL https://get.k3s.io | \
-	K3S_URL="https://${SERVER_IP}:6443" \
-	K3S_TOKEN="${K3S_TOKEN}" \
-	sh -s - agent \
-	--node-ip "${WORKER_IP}"
-
-echo "Worker connecté au server !"
-rc-service k3s-agent status
+echo "Worker connecté au serveur K3s avec succès !"

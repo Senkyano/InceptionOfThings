@@ -1,58 +1,33 @@
-#!/bin/bash
+#!/bin/sh
 
-echo "=== Install dependecies server K3s ==="
+TOKEN=$(echo "$1" | tr -d '\r')
+IP=$(echo "$2" | tr -d '\r')
 
-# Update
-apk update && apk upgrade
-apk add --no-cache curl
+if [ -z "$TOKEN" ] || [ -z "$IP" ]; then
+	echo "ERREUR CRITIQUE : Le TOKEN ou l'IP est vide !"
+	echo "Vérifiez votre fichier .env et votre Vagrantfile."
+	exit 1
+fi
 
-TOKEN=$1
-SERVER_IP=$2
+echo "DEBUG: Le token utilisé est [${TOKEN}]"
+# 1. Préparer Alpine Linux pour K3s
+apk update
+apk add curl ca-certificates iptables ip6tables coreutils util-linux
+# rc-update add cgroups boot
+# rc-service cgroups start
 
-# Install K3s
-echo "=== Installation K3s on mode Server ==="
-curl -sfL https://get.k3s.io | sh -s - server \
-	--token=$TOKEN \
-	--disable=traefik \
-	--write-kubeconfig-mode 644 \
-	--node-ip $SERVER_IP \
-	--bind-address $SERVER_IP \
-	--advertise-address $SERVER_IP \
-	--node-label "roles=master"
+echo $TOKEN
 
-while [ ! -f /var/lib/rancher/k3s/server/node-token ]; do
-	echo "Waiting k3s server start ..." && sleep 2
+# Au lieu de juste : export INSTALL_K3S_EXEC=...
+export INSTALL_K3S_VERSION="v1.30.4+k3s1"  # Force une version qui accepte cgroups v1
+export INSTALL_K3S_EXEC="server --node-ip=${IP} --advertise-address=${IP} --write-kubeconfig-mode=644"
+export K3S_TOKEN=${TOKEN}
+
+curl -sfL https://get.k3s.io | sh -
+
+until k3s kubectl get nodes >/dev/null 2>&1; do
+	echo "Waiting for K3s server..."
+	sleep 2
 done
-
-echo "=== Server k3s start ==="
-
-if [ ! -d "/vagrant" ]; then
-	echo "ERROR : directorie /vagrant doesn't exist. Try to create ..."
-	sudo mkdir -p /vagrant
-fi
-
-K3S_TOKEN=$(sudo cat /var/lib/rancher/k3s/server/node-token)
-echo "$K3S_TOKEN"
-echo "$K3S_TOKEN" > /vagrant/k3s-token.txt
-
-mkdir -p /home/vagrant/.kube
-cp /etc/rancher/k3s/k3s.yaml /home/vagrant/.kube/config
-chown vagrant:vagrant /home/vagrant/.kube
-
-echo ""
-echo "=== K3s Server install success ! ==="
-if [ ! -f "/vagrant/k3s-token.txt" ]; then
-	echo "Token : doesn't exist or create in k3s-token.txt"
-else
-	echo "Token: saved in /vagrant/k3s-token.txt"
-fi
-echo ""
-
-echo "=== State cluster ==="
-export KUBCONFIG=/etc/rancher/k3s/k3s.yaml
-sleep 20
-kubectl get nodes
-
-echo ""
-echo "=== Services k3s ==="
-rc-status | grep k3s
+# Boucle wait
+echo "K3s Server started successfully!"
