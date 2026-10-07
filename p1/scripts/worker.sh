@@ -1,18 +1,12 @@
 #!/bin/bash
 
-apk update && apk add curl # iptables
+apk update && apk add curl
 
 TOKEN="$1"
 
-# # Attends que le serveur créé le token
-# while [ ! -f "$TOKEN_FILE" ]; do
-# 	echo "waiting for token"
-# 	sleep 2
-# done
-
-# K3s in agent mode
+# Install K3s in agent mode and join the server
 curl -sfL https://get.k3s.io | \
     K3S_URL=https://192.168.56.110:6443 \
-	K3S_TOKEN="$TOKEN" \
+    K3S_TOKEN="$TOKEN" \
     sh -s - agent \
     --node-ip 192.168.56.111
