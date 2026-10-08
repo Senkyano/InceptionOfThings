@@ -11,6 +11,10 @@ PATH_VM_LOAD=?
 # ssh-key path
 PATH_ID_RSA_PUB=?
 
+# Provider
+SOFT_PROVIDER=?
+
+
 # System config
 VM_BOX=generic/alpine319
 VM_VERSION_BOX=4.3.12

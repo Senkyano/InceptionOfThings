@@ -1,6 +1,11 @@
-require 'dotenv'
-Dotenv.load
-
+if File.exist?('.env')
+  File.readlines('.env').each do |line|
+    # On ignore les lignes vides et les commentaires
+    next if line.strip.empty? || line.start_with?('#')
+    key, value = line.strip.split('=', 2)
+    ENV[key] = value.gsub(/['"]/, '') if key && value
+  end
+end
 # In WSL windows
 ssh_pub_key_path = File.expand_path(ENV['PATH_ID_RSA_PUB'])
 
@@ -15,7 +20,7 @@ Vagrant.configure("2") do |config|
 	config.vm.box = ENV['VM_BOX']
 	config.vm.box_version = ENV['VM_VERSION_BOX']
 
-	config.vm.provision "shell", inline: <<-SHELL
+	config.vm.provision ENV['SOFT_PROVIDER'], inline: <<-SHELL
 		mkdir -p /home/vagrant/.ssh
 		echo "#{ssh_pub_key_path}" >> /home/vagrant/.ssh/authorized_keys
 		chown -R vagrant:vagrant /home/vagrant/.ssh
@@ -28,7 +33,7 @@ Vagrant.configure("2") do |config|
 		server.vm.network "private_network", ip: ENV['IP_NODE_S']
 		server.vm.synced_folder ".", "/vagrant", type: "rsync"
 
-		server.vm.provider "virtualbox" do |vb|
+		server.vm.provider ENV['SOFT_PROVIDER'] do |vb|
 			vb.memory = ENV['VM_MEMORY_SERVER']
 			vb.cpus = ENV['VM_CORE_SERVER']
 			vb.name = "rihoyS"
@@ -46,7 +51,7 @@ Vagrant.configure("2") do |config|
 		worker.vm.hostname = "rihoySW"
 		worker.vm.network "private_network", ip: ENV['IP_NODE_SW']
 		
-		worker.vm.provider "virtualbox" do |vb|
+		worker.vm.provider ENV['SOFT_PROVIDER'] do |vb|
 			vb.memory = ENV['VM_MEMORY']
 			vb.cpus = ENV['VM_CORE']
 			vb.name = "rihoySW"
