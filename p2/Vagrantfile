@@ -23,8 +23,8 @@ Vagrant.configure("2") do |config|
 		chmod 600 /home/vagrant/.ssh/authorized_keys
 	SHELL
 
-	config.vm.provider "virtualbox" do |vb|
-		vb.memory = ENV['VM_MEMORY']
+	config.vm.provider ENV['SOFT_PROVIDER'] do |vb|
+		vb.memory = ENV['VM_MEMORY_S']
 		vb.cpus = ENV['VM_CORE']
 	end
 
@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
 		server.vm.synced_folder ".", "/vagrant", type: "rsync"
 		server.vm.network "private_network", ip: ENV['IP_NODE_S']
 
-		server.vm.provider "virtualbox" do |vb|
+		server.vm.provider ENV['SOFT_PROVIDER'] do |vb|
 			vb.name = ENV['VM_NAME']
 			extern_path = ENV['PATH_VM_LOAD']
 			vb.customize ["setproperty", "machinefolder", extern_path]
@@ -46,4 +46,23 @@ Vagrant.configure("2") do |config|
 		server.vm.provision "shell",
 			path: "scripts/install_p2_3webapp.sh"
 	end
+end
+# Vagrant.configure("2") do |config|
+
+#     config.vm.box = "generic/alpine319"
+#     config.vm.box_check_update = false
+
+#     config.vm.define "ahenaultS" do |server|
+#         server.vm.hostname = "ahenaultS"
+#         server.vm.network "private_network", ip: "192.168.56.110"
+
+#         server.vm.provider "libvirt" do |libvirt|
+#             libvirt.cpus = 2
+#             libvirt.memory = 2048
+#         end
+        
+#         server.vm.provision "file", source: "confs", destination: "/home/vagrant/confs"
+#         server.vm.provision "shell", path: "scripts/server.sh"
+#     end
+
 end
